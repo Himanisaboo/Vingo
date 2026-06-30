@@ -12,7 +12,7 @@ function Home() {
     <>
       {(userData?.role === "user" || userData?.role === "owner") && <Nav />}
 
-      <div className="w-full min-h-screen pt-[100px]">
+      <div className="w-[100vw] min-h-[100vh] pt-[100px] flex flex-col items-center bg-[#fff9f6]">
         {userData?.role === "user" && <UserDashboard />}
 
         {userData?.role === "owner" && <OwnerDashboard />}

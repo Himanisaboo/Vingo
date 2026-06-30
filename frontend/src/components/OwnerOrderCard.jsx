@@ -4,8 +4,10 @@ import { serverUrl } from "../App";
 import axios from "axios";
 import { useDispatch } from "react-redux";
 import { updateOrderStatus } from "../redux/userSlice.js";
+import { useState } from "react";
 function OwnerOrderCard({ data }) {
   const dispatch=useDispatch()
+  const [availableBoys,setAvailableBoys]=useState([])
   const handleUpdateStatus = async (orderId, shopId, status) => {
     try {
       const result = await axios.post(
@@ -15,6 +17,8 @@ function OwnerOrderCard({ data }) {
       );
 
       dispatch(updateOrderStatus({ orderId, shopId, status }));
+      setAvailableBoys(result.data.availableBoys)
+      console.log(result.data)
     } catch (error) {
       console.log(error);
     }
@@ -76,6 +80,35 @@ function OwnerOrderCard({ data }) {
 
 </select>
       </div>
+
+
+      {data.shopOrders?.[0]?.status === "out of delivery" && 
+      <div className="mt-3 p-2 border rounded-lg text-sm bg-orange-50">
+       {data.shopOrders?.[0]?.assignedDeliveryBoy ? (
+  <p>Assigned Delivery Boy:</p>
+) : (
+  <p>Available Delivery Boys:</p>
+)}
+        {availableBoys.length>0?(
+availableBoys.map((b,index)=>(
+  <div key={b.id || index} className="text-gray-300">
+    {b.fullName}-{b.mobile}
+    </div>
+))
+        ):
+        data.shopOrders?.[0]?.assignedDeliveryBoy ? (
+  <div>
+    {data.shopOrders[0].assignedDeliveryBoy.fullName}-{data.shopOrders[0].assignedDeliveryBoy.mobile}
+  </div>
+  
+) : (
+  <div>Waiting for delivery boy to accept</div>
+)
+        
+        }
+
+        </div>
+        }
       <div className="text-right font-bold text-gray-800 tet-sm">
         Total: ₹{data.shopOrders[0].subtotal}
       </div>
