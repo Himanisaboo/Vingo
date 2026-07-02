@@ -32,12 +32,38 @@ function CheckOut() {
   const [addressInput, setAddressInput] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("cod");
   const apiKey = import.meta.env.VITE_GEOAPIKEY;
-const { cartItems,totalAmount } = useSelector((state) => state.user);
+const { cartItems,totalAmount,userData } = useSelector((state) => state.user);
 
   const { location, address } = useSelector((state) => state.map);
 
 const deliveryFee=totalAmount>500?0:40
 const AmountWithDeliveryFee=totalAmount+deliveryFee
+const openRazorpayWindow = (orderId,razorOrder) => {
+  const options={
+     key:import.meta.env.VITE_RAZORPAY_KEY_ID,
+     amount:razorOrder.amount,
+     currency:"INR",
+     name:"Vingo",
+     description:"Food Delivery Website",
+     order_id:razorOrder.id,
+     handler:async function(response){
+      try {
+        const result=await axios.post(`${serverUrl}/api/order/verify-payment`,{
+          razorpay_payment_id: response.razorpay_payment_id,
+          orderId
+       
+        },{withCredentials:true});
+        dispatch(addMyOrder(result.data))
+        navigate("/order-placed")
+      } catch (error) {
+        console.error("Error verifying payment:", error);
+      }
+     }
+  }
+  const rzp=new window.Razorpay(options)
+  rzp.open()
+
+}
 
   useEffect(() => {
     console.log("Redux Location:", location);
@@ -56,12 +82,11 @@ const AmountWithDeliveryFee=totalAmount+deliveryFee
   };
 
   const getCurrentLocation = () => {
-    navigator.geolocation.getCurrentPosition(async (position) => {
-      const latitude = position.coords.latitude;
-      const longitude = position.coords.longitude;
+    const latitude=userData?.location?.coordinates[1]
+    const longitude=userData?.location?.coordinates[0]
       dispatch(setLocation({ lat: latitude, lon: longitude }));
       getAddressByLatLng(latitude, longitude);
-    });
+    
   };
 
   const getlatLngByAddress = async () => {
@@ -84,12 +109,19 @@ const AmountWithDeliveryFee=totalAmount+deliveryFee
           latitude:location.lat,
           longitude:location.lon
         },
-        totalAmount,
+        totalAmount:AmountWithDeliveryFee,
         cartItems
       },{withCredentials:true})
-
-      dispatch(addMyOrder(result.data))
+       if(paymentMethod=="cod"){
+dispatch(addMyOrder(result.data))
       navigate("/order-placed")
+       }
+       else{
+        const orderId=result.data.orderId
+        const  razorOrder=result.data.razorOrder
+openRazorpayWindow( orderId,razorOrder)
+       }
+      
     }
     catch(error){
       console.log(error)

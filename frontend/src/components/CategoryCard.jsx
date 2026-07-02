@@ -1,8 +1,8 @@
 import React from "react";
 
-function CategoryCard({ name, image }) {
+function CategoryCard({ name, image,onClick }) {
   return (
-    <div className="w-[120px] h-[120px] md:w-[180px] rounded-2xl border-2 border-[#ff4d2d] shrink-0 overflow-hidden bg-white shadow-xl hover:shadow-lg transition-shadow relative">
+    <div className="w-[120px] h-[120px] md:w-[180px] rounded-2xl border-2 border-[#ff4d2d] shrink-0 overflow-hidden bg-white shadow-xl hover:shadow-lg transition-shadow relative " onClick={onClick}>
       <img
         src={image}
         alt={name}

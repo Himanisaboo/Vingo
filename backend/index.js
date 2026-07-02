@@ -11,9 +11,22 @@ import cors from "cors";
 import shopRouter from "./routes/shop.routes.js";
 import itemRouter from "./routes/item.routes.js";
 import orderRouter from "./routes/order.routes.js";
-
-
+import http from "http";
+import { Server } from "socket.io";
+import { socketHandler } from "./socket.js";
 const app=express();
+const server=http.createServer(app);
+
+
+const io=new Server(server,{
+    cors:{
+    origin:"http://localhost:5173",
+    credentials:true,//allow cookies to be sent from frontend to backend
+    methods:["GET","POST"]
+}
+});//bidirectional communication between client and server
+app.set("io",io)
+
 const port=process.env.PORT || 5000; 
 app.use(cors({
     origin:"http://localhost:5173",
@@ -26,8 +39,8 @@ app.use("/api/user",userRouter)
 app.use("/api/shop",shopRouter)
 app.use("/api/item",itemRouter)
 app.use("/api/order",orderRouter)
-
-app.listen(port,()=>{
+socketHandler(io)
+server.listen(port,()=>{
 connectDB();
 console.log(`Server is running on port ${port}`)
 })

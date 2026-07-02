@@ -13,7 +13,10 @@ const userSlice=createSlice({  //ek function hota h redux ke andr
         itemsInMyCity:null,
         cartItems:[],
         totalAmount:0,
-        myOrders:null
+        myOrders:[],
+        searchItems:null,
+        socket:null
+
     },
     //changes ke liye reducers bnate h    
     reducers:{
@@ -79,11 +82,26 @@ setCurrentAddress:(state,action)=>{
                 order.shopOrders[0].status=status
                } 
             }
+        },
+        updateRealtimeOrderStatus:(state,action)=>{
+             const {orderId,shopId,status}=action.payload
+            const order=state.myOrders.find(o=>o._id==orderId)
+            if(order){
+               const shopOrder=order.shopOrders.find(so=>so.shop._id==shopId)
+               if(shopOrder){
+                shopOrder.status=status
+               }
+            }
+        },
+        setSearchItems:(state,action)=>{
+            state.searchItems=action.payload
+        },
+        setSocket:(state,action)=>{
+            state.socket=action.payload
         }
-
         }
 
     
     })
-    export const {setUserData,setCurrentCity,setCurrentState,setCurrentAddress,setShopsInMyCity,setItemsInMyCity,addToCart,updateQuantity,removeCardItem,setMyOrders,addMyOrder,updateOrderStatus}=userSlice.actions
+    export const {setUserData,setCurrentCity,setCurrentState,setCurrentAddress,setShopsInMyCity,setItemsInMyCity,addToCart,updateQuantity,removeCardItem,setMyOrders,addMyOrder,updateOrderStatus,setSearchItems,setSocket,updateRealtimeOrderStatus}=userSlice.actions
     export default userSlice.reducer

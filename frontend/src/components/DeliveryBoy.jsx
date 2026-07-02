@@ -5,16 +5,16 @@ import { serverUrl } from "../App";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import DeliveryBoyTracking from "./DeliveryBoyTracking";
+import { use } from "react";
 
 function DeliveryBoy() {
   const navigate = useNavigate();
-  const {userData}=useSelector(state=>state.user)
+  const {userData,socket}=useSelector(state=>state.user)
   const [currentOrder,setCurrentOrder]=useState()
   const [showOtpBox,setShowOtpBox]=useState(false)
   const [availableAssignments,setAvailableAssignments]=useState([])
-  const handleSendOtp=(e)=>{
-    setShowOtpBox(true)
-  }
+  const [otp,setOtp]=useState("")
+  
   const getAssignments=async()=>{
     try {
       const result=await axios.get(`${serverUrl}/api/order/get-assignments`,{withCredentials:true})
@@ -40,12 +40,47 @@ try {
   console.log(error)
 }
  }
+  const sendOtp=async()=>{
+    
+try {
+  const result=await axios.post(`${serverUrl}/api/order/send-delivery-otp`,{
+    orderId:currentOrder._id,
+    shopOrderId:currentOrder.shopOrder._id || currentOrder.shopOrder.id
+  },{withCredentials:true})
+  setShowOtpBox(true)
+      console.log(result.data)
+} catch (error) {
+  console.log(error)
+}
+ }
+ const verifyOtp=async(otp)=>{
+try {
+  const result=await axios.post(`${serverUrl}/api/order/verify-delivery-otp`,{
+    orderId:currentOrder._id,
+    shopOrderId:currentOrder.shopOrder._id || currentOrder.shopOrder.id,
+    otp
+  },{withCredentials:true})
+      console.log(result.data)
+} catch (error) {
+  console.log(error)
+}
+ }
+ 
   useEffect(()=>{
   getAssignments()
   getCurrentOrder()
   },[userData])
   
- 
+ useEffect(()=>{
+socket?.on('newAssignment',(data)=>{
+if(data.sendTo==userData._id){
+  setAvailableAssignments(prev=>[...prev,data])
+}
+})
+return ()=>{
+  socket?.off('newAssignment')
+}
+ },[socket])
   return (
     <div className="w-screen min-h-screen flex flex-col gap-5 items-center bg-[#fff9f6] overflow-y-auto">
       <Nav/>
@@ -100,13 +135,13 @@ No Available Orders
   </div>
   <DeliveryBoyTracking data={currentOrder}/>
   {!showOtpBox ?
-  <button className="mt-4 w-full bg-green-500 text-white font-semibold py-2 px-4 rounded-xl shadow-md hover:bg-green-600 active:scale-95 transition-all duartion-200" onClick={handleSendOtp}>
+  <button className="mt-4 w-full bg-green-500 text-white font-semibold py-2 px-4 rounded-xl shadow-md hover:bg-green-600 active:scale-95 transition-all duartion-200" onClick={sendOtp}>
     Mark As Delivered
   </button> :
   <div className="mt-4 p-4 border rounded-xl bg-gray-50">
     <p className="text-sm font-semibold mb-2">Enter Otp send to <span className="text-orange-500">{currentOrder.user.fullName}</span></p>
-    <input type="text" className="w-full border px-3 py-2 rounded-lg mb-3 focus:outline-none focus:ring-2 focus:orange-400" placeholder="Enter OTP"/>
-    <button className="w-full bg-orange-500 text-white py-2 rounded-lg font-semibold hover:bg-orange-600 transition-all">Submit OTP</button>
+    <input type="text" className="w-full border px-3 py-2 rounded-lg mb-3 focus:outline-none focus:ring-2 focus:orange-400" placeholder="Enter OTP" onChange={(e)=>setOtp(e.target.value)} value={otp}/>
+    <button className="w-full bg-orange-500 text-white py-2 rounded-lg font-semibold hover:bg-orange-600 transition-all" onClick={()=>verifyOtp(otp)}>Submit OTP</button>
 
     </div>}
   </div>
